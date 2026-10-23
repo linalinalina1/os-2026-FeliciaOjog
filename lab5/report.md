@@ -1,11 +1,11 @@
-# Laboratory Work 5 — The File System with Your Own Hands
+# Laboratory Work 5 - The File System with Your Own Hands
 
 **Course:** Operating Systems  
 **Group:** FAF-243  
 **Environment:** Ubuntu in Oracle VirtualBox, normal user `lina`  
 **Working directory:** `/home/lina/os-lab5`
 
-## Part 1 — The Tree and File Types
+## Part 1 - The Tree and File Types
 
 ### Commands
 ```bash
@@ -25,7 +25,27 @@ du -sh /usr 2>/dev/null
 3. `/dev/autofs` and `/dev/null` are character devices. `/dev/sda` is a block device, identified in the disk listing.
 4. `du -sh` reported **296M** for `/var/log` and **5.3G** for `/usr`. Thus `/usr` used approximately **5.0 GB more** disk space (using rounded, human-readable figures).
 
-## Part 2 — Inodes and Links
+### Supporting terminal evidence
+
+The following results were transcribed from the laboratory screenshots. The file-type indicators are presented as a summary of the listing, not as a reconstructed full `ls -ld` line.
+
+```text
+$ ls -ld /etc /etc/passwd /bin /dev/null /tmp
+/etc           d (directory)
+/etc/passwd    - (regular file)
+/bin           l (symbolic link -> usr/bin)
+/dev/null      c (character device)
+/tmp           d (directory)
+
+$ du -sh /var/log
+296M    /var/log
+$ du -sh /usr
+5.3G    /usr
+```
+
+The original `ls` and `file` output is visible in the accompanying Word report screenshots.
+
+## Part 2 - Inodes and Links
 
 ### Commands
 ```bash
@@ -63,7 +83,46 @@ rm big.img
 4. Directory `d` initially had two links: one from its parent directory and its own `.` entry. Each child directory (`x` and `y`) added a `..` reference to `d`, increasing the count to four.
 5. `one.txt` had two bytes of content (including a newline) but typically consumed one 4.0K disk block. `big.img` had a logical size of 1 GB but zero allocated data blocks because `truncate` created a sparse file.
 
-## Part 3 — Permissions
+### Supporting terminal evidence
+
+These are the recorded command results. The inode number from the Linux `stat` screenshot is deliberately not guessed.
+
+```text
+$ stat notes.txt
+Links: 1
+
+$ ln notes.txt hard.txt
+$ ls -li notes.txt hard.txt
+Both entries: same inode number, Links: 2
+
+$ rm notes.txt
+$ cat hard.txt
+hello
+
+$ ln -s hard.txt soft.txt
+Symbolic link: soft.txt -> hard.txt (8 bytes)
+$ rm hard.txt
+$ cat soft.txt
+No such file or directory
+
+$ ls -ld d                         (after mkdir d)
+Link count: 2
+$ ls -ld d                         (after mkdir d/x d/y)
+Link count: 4
+
+$ ls -l one.txt
+Logical size: 2 bytes
+$ du -h one.txt
+4.0K    one.txt
+$ ls -lh big.img
+Logical size: 1G
+$ du -h big.img
+0       big.img
+```
+
+Lines such as `Link count:` and `Logical size:` are labeled transcriptions of the observed values, not verbatim Linux output. The corresponding command screenshots are in the Word report.
+
+## Part 3 - Permissions
 
 ### Commands
 ```bash
@@ -100,7 +159,49 @@ ls -l /etc/shadow
 4. Directory `r` allows listing the entry names. Directory `x` allows searching/traversing a known path. This explains why a known `box/f` file could be read with execute-only directory access even when `ls box` failed.
 5. The `s` in `/usr/bin/passwd` indicates **setuid**, allowing its privileged password-update operation. The `t` in `/tmp` indicates the **sticky bit**, restricting who can remove entries from the shared directory.
 
-## Part 4 — Disks and the Kernel as Files
+### Supporting terminal evidence
+
+The key permission and error results were transcribed from the screenshots. Permission bits are shown without timestamps and ownership fields.
+
+```text
+$ chmod 600 s.txt
+$ ls -l s.txt
+-rw-------  s.txt
+$ chmod 000 s.txt
+$ cat s.txt
+Permission denied
+$ chmod u+r s.txt
+$ cat s.txt
+secret
+
+$ umask
+0002
+$ ls -ld new.txt newdir
+-rw-rw-r--  new.txt
+drwxrwxr-x  newdir
+
+$ chmod u=r,go= box
+$ ls box
+f
+$ cat box/f
+Permission denied
+$ chmod u=x,go= box
+$ ls box
+Permission denied
+$ cat box/f
+hi
+
+$ ls -l /usr/bin/passwd
+-rwsr-xr-x  (setuid enabled)
+$ ls -ld /tmp
+drwxrwxrwt  (sticky bit enabled)
+$ cat /etc/shadow
+Permission denied
+```
+
+The complete `ls -l` rows and exact error prefixes remain visible in the Word report screenshots. This section reproduces only the verified permission strings and observed messages.
+
+## Part 4 - Disks and the Kernel as Files
 
 ### Commands
 ```bash
@@ -119,7 +220,28 @@ ls -l /proc/self/fd
 3. `/proc/cpuinfo` reported **2 logical processors**. `/proc/meminfo` displayed **MemTotal: 3480328 kB** (about 3.32 GiB), **MemFree: 171616 kB**, and **MemAvailable: 682868 kB** at the time of measurement. These values describe the virtual machine, not necessarily the physical host.
 4. `/proc/self/status` showed **head** as the process name because `/proc/self` refers to the process reading it.
 
-## Optional Exercises — Bonuses
+### Disk layout (from `lsblk` and `mount`)
+
+```text
+/dev/sda (25G)
+├── /dev/sda1 (1M)
+└── /dev/sda2 (25G) - mounted at / (ext4)
+```
+
+### Recorded disk and system results
+
+```text
+Root filesystem: 25G total, 8.3G used, 15G available, 36% used
+Logical processors: 2
+MemTotal: 3480328 kB
+MemFree: 171616 kB
+MemAvailable: 682868 kB
+/proc/self/status process name: head
+```
+
+The above is a transcription of the measured values, not a verbatim reproduction of the original command formatting.
+
+## Optional Exercises - Bonuses
 
 ### Bonus A: Magic Numbers
 ```bash
@@ -129,6 +251,17 @@ file notes.txt
 xxd notes.txt | head -1
 ```
 The `file` utility identified `notes.txt` as gzip-compressed data despite its `.txt` extension. The first bytes, **`1f 8b 08`**, contain the gzip magic number (`1f 8b`) and compression-method byte (`08`).
+
+### Recorded hexadecimal signature
+
+The first three bytes observed with `xxd` were:
+
+```text
+1f 8b 08
+```
+
+These are the recorded signature bytes, not a reproduction of the full `xxd` line.
+
 
 ### Bonus B: Find Setuid Programs
 ```bash
@@ -156,7 +289,13 @@ The search listed the following **16 setuid files** on the scanned root filesyst
 /usr/sbin/pppd
 ```
 
-The screenshot shows these **16** paths (the result is not a complete inventory beyond this captured command). The permissions of `/usr/bin/passwd` included `s` in the owner's execute position. A precise comparison with the lecturer's slide requires that slide's list.
+The screenshot shows these **16** paths (the result is not a complete inventory beyond this captured command). The permissions of `/usr/bin/passwd` included `s` in the owner's execute position.
+
+**Comparison with Lecture 3, slide 37:** The lecture lists nine setuid paths: `/usr/bin/chfn`, `/usr/bin/chsh`, `/usr/bin/gpasswd`, `/usr/bin/mount`, `/usr/bin/newgrp`, `/usr/bin/passwd`, `/usr/bin/su`, `/usr/bin/sudo`, and `/usr/bin/umount`. Seven of these paths also appeared in the laboratory output.
+
+**Nine paths found in the laboratory but absent from the lecture slide:** `/usr/bin/fusermount3`, `/usr/bin/sudo.ws`, `/usr/bin/pkexec`, `/usr/bin/ntfs-3g`, `/usr/lib/dbus-1.0/dbus-daemon-launch-helper`, `/usr/lib/cargo/bin/su`, `/usr/lib/cargo/bin/sudo`, `/usr/lib/openssh/ssh-keysign`, and `/usr/sbin/pppd`. The lecture's `/usr/bin/newgrp` and `/usr/bin/sudo` did not appear in the captured output. Although `/usr/lib/cargo/bin/sudo` has the same program name as `/usr/bin/sudo`, it is a different file path.
+
+**Bonus answer:** Yes. The local setuid search returned nine paths that were not listed on slide 37, illustrating how installed software and system configuration can change the setuid inventory.
 
 ## Conclusion
 The laboratory connected Linux filesystem theory with observed file types, inode identity, links, permissions, disk allocation, and virtual kernel interfaces. Hard links demonstrated that file names are separate from inodes; symbolic links could become dangling; and sparse files illustrated the difference between logical size and allocated blocks. Permission experiments using a normal user, including the observed umask `0002`, confirmed how ownership, access bits, and special permissions affect operations. Disk and `/proc` inspection connected the filesystem hierarchy to the virtual machine's storage and runtime state. The two optional experiments further showed how file signatures identify data independently of extensions and how setuid is used for privileged executables.
