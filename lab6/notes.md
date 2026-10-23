@@ -1,4 +1,4 @@
-# Laboratory Work 6 — Inside the xv6 File System
+# Laboratory Work 6 - Inside the xv6 File System
 
 **Course:** Operating Systems  
 **Group:** FAF-243  
@@ -13,7 +13,7 @@ make qemu
 ```
 The setup check verified the required toolchain and QEMU environment.
 
-## Part 1 — Read What xv6 Shows
+## Part 1 - Read What xv6 Shows
 
 ### xv6 shell commands
 ```text
@@ -27,7 +27,7 @@ ls a
 2. The root directory has inode **1**. At the root, `.` and `..` both refer to that inode because root is its own parent.
 3. An empty directory `a` has size **32 bytes** and contains `.` and `..`, so each `struct dirent` occupies **16 bytes**.
 
-## Part 2 — Write `mystat`
+## Part 2 - Write `mystat`
 
 ### Ubuntu commands
 ```bash
@@ -75,7 +75,7 @@ $ cat r2 | wc
 2. In `kernel/sysfile.c`, `sys_unlink` decreases `ip->nlink` after removing the directory entry. The inode's blocks are freed once its link count is zero and the last active reference has been released.
 3. `struct dinode` in `kernel/fs.h` includes **type, major, minor, nlink, size, addrs** (block addresses).
 
-## Part 3 — Measure the Limits
+## Part 3 - Measure the Limits
 
 ### Ubuntu commands
 ```bash
@@ -96,7 +96,7 @@ ls
 2. In the single-indirect-block arrangement specified by the exercise, `BSIZE = 1024`, `NDIRECT = 12`, and `NINDIRECT = 1024 / 4 = 256`. Thus the maximum file size is **`(12 + 256) * 1024 = 274432 bytes` (268 KiB)**.
 3. The image-builder output reported **2000 total blocks**, **47 metadata blocks** (31 log, 13 inode, 1 bitmap, 1 boot and 1 superblock) and **1953 data blocks**.
 
-## Part 4 — Write `find`
+## Part 4 - Write `find`
 
 ### Ubuntu commands
 ```bash
@@ -131,7 +131,7 @@ a/b
 ```
 The implementation recursively reads directory entries, skips unused entries (`inum == 0`) and `.`/`..`, compares names with `strcmp`, and closes open directories.
 
-## Optional Exercise — `find -n` Inode Numbers
+## Optional Exercise - `find -n` Inode Numbers
 
 ### Ubuntu command
 ```bash
