@@ -1,0 +1,21 @@
+LABORATORY WORK 10
+Add Your Own System Call: trace (xv6)
+OBSERVE QUESTIONS AND ANSWERS
+
+1. In trace 32 grep hello README, why do you see only read, and not open or close?
+
+Answer: The mask 32 equals 2^5, so it enables only bit 5, which corresponds to SYS_read. The trace command therefore displays read system calls but does not display open (15) or close (21). These other system calls still execute; their trace messages are simply filtered out. The recorded read return values were 1023, 965, 453, and 0. The last value indicates end of file.
+
+2. In forkforkfork, three different PIDs print lines. Which line of code from Part 2 makes that possible?
+
+Answer: The line np->trace_mask = p->trace_mask; in kernel/proc.c copies the tracing mask from a parent process to its child when fork is called. Therefore, child processes also trace their own fork calls, resulting in messages from multiple process IDs. In the recorded experiment, the last successful fork returned PID 66, two fork calls returned -1, and the test ended with OK and ALL TESTS PASSED. PID values can differ between runs.
+
+3. In trace 65536 echo hi, the trace line is printed between "hi" and the new line. Why? How many times does echo call write?
+
+Answer: The mask 65536 equals 2^16 and enables tracing of SYS_write. In the recorded experiment, echo called write twice. The first call wrote the two characters "hi" and returned 2. Before echo wrote the newline, the kernel printed the trace for that first call, so the trace appeared immediately after "hi" on the same line. The second call wrote one newline character and returned 1. The recorded trace used PID 67.
+
+4. Which mask traces both open (15) and close (21), and nothing else?
+
+Answer: Enable bit 15 and bit 21 only:
+(1 << 15) | (1 << 21) = 32768 + 2097152 = 2129920.
+Therefore, the required mask is 2129920.
