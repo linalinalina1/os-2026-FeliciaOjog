@@ -1,0 +1,18 @@
+Lab 13 - Semaphores in Your Own Kernel (xv6)
+Observe questions and answers
+
+1. Without the lock, why do the letters mix? How many system calls does one line cost?
+
+The mix program sends every character through its own write(1, p, 1) system call. Its two processes may be scheduled between these calls, so A and b characters from different processes appear on the same line. Each generated line has 30 letters followed by a newline, requiring 31 write() system calls. Both unlocked runs showed actual mixed output, with different interleavings.
+
+2. With the lock, every line is whole. Which two lines of mix.c make one line a critical section?
+
+sem_down(3) before the loop of write() calls and sem_up(3) after the loop. In the observed mix lock execution, the output contained five complete A lines followed by five complete b lines. The specific order may change, but characters cannot intermingle within the protected line.
+
+3. In sem_down the test is while (s->value == 0), not if. Why can a process wake up and still find 0?
+
+A wakeup only allows a waiting process to try again. Another runnable process may claim a permit first, or several processes can awaken for fewer available permits. Rechecking with while prevents a process from continuing when the count is still zero.
+
+4. sem_down calls release(&s->lock) BEFORE sleep(). What would go wrong if it slept holding the spinlock?
+
+The sleeping process would prevent another process from acquiring the spinlock in sem_up(), so the count could not be incremented and waiters could not be awakened. That would block progress and could cause deadlock. The implementation calls sleep_prepare() while protected, then releases the spinlock before sleep(), as required by this xv6 variant.
